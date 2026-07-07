@@ -25,6 +25,7 @@ import {
   Trash2,
   Settings,
   BarChart2,
+  BookOpen,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ interface SidebarProps {
   onOpenPrivacy: () => void;
   onOpenSettings: () => void;
   onOpenEscalera: () => void;
+  onOpenNotes: () => void;
 }
 
 interface Conversation {
@@ -51,6 +53,7 @@ export default function Sidebar({
   onOpenPrivacy,
   onOpenSettings,
   onOpenEscalera,
+  onOpenNotes,
 }: SidebarProps) {
   const { user, logout } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -392,6 +395,11 @@ export default function Sidebar({
         <button onClick={onOpenEscalera} style={navBtnStyle} className="glass-hover">
           <BarChart2 size={15} style={{ flexShrink: 0 }} />
           La Escalera
+        </button>
+
+        <button onClick={onOpenNotes} style={navBtnStyle} className="glass-hover">
+          <BookOpen size={15} style={{ flexShrink: 0 }} />
+          Diario / Notas
         </button>
 
         <button onClick={onOpenPrivacy} style={navBtnStyle} className="glass-hover">

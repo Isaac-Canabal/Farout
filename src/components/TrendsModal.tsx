@@ -20,7 +20,7 @@ interface TrendsModalProps {
 
 interface CheckIn {
   id: string;
-  type: "phq9" | "gad7" | "daily";
+  type: "phq9" | "gad7" | "daily" | "mood_note";
   score: number;
   createdAt: any;
 }
@@ -129,10 +129,12 @@ export default function TrendsModal({ onClose, onOpenCheckIn }: TrendsModalProps
   const phq9 = checkins.filter((c) => c.type === "phq9");
   const gad7 = checkins.filter((c) => c.type === "gad7");
   const daily = checkins.filter((c) => c.type === "daily");
+  const moodNotes = checkins.filter((c) => c.type === "mood_note");
 
   const lastPhq9 = phq9[phq9.length - 1];
   const lastGad7 = gad7[gad7.length - 1];
   const lastDaily = daily[daily.length - 1];
+  const lastMoodNote = moodNotes[moodNotes.length - 1];
 
   return (
     <div
@@ -545,6 +547,104 @@ export default function TrendsModal({ onClose, onOpenCheckIn }: TrendsModalProps
                         }}
                       >
                         {formatDate(c.createdAt)} — <strong style={{ color: "#34d399" }}>{c.score}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mood Notes (Diario) Section */}
+              {moodNotes.length > 0 && (
+                <div
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "14px",
+                    padding: "1.1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.9rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.8rem",
+                        fontWeight: "600",
+                        color: "#f59e0b",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Diario de Notas
+                    </span>
+                    {lastMoodNote && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span
+                          style={{
+                            fontSize: "1.5rem",
+                            fontWeight: "700",
+                            color: "#f59e0b",
+                          }}
+                        >
+                          {lastMoodNote.score}
+                        </span>
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "0.7rem",
+                              color: getSeverityLabel("daily", lastMoodNote.score, 4).color,
+                              fontWeight: "600",
+                            }}
+                          >
+                            {["Muy Mal", "Mal", "Normal", "Bien", "Muy Bien"][lastMoodNote.score] || "---"}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.65rem",
+                              color: "var(--text-muted)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "3px",
+                            }}
+                          >
+                            <Calendar size={10} />
+                            {formatDate(lastMoodNote.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {moodNotes.length >= 2 ? (
+                    <MiniChart data={moodNotes} color="#f59e0b" max={4} />
+                  ) : (
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+                      Necesitas al menos 2 notas para ver la grafica.
+                    </p>
+                  )}
+
+                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                    {moodNotes.slice(-6).map((c) => (
+                      <div
+                        key={c.id}
+                        style={{
+                          fontSize: "0.72rem",
+                          padding: "0.2rem 0.55rem",
+                          borderRadius: "20px",
+                          background: "rgba(245, 158, 11, 0.07)",
+                          border: "1px solid rgba(245, 158, 11, 0.2)",
+                          color: "var(--text-secondary)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatDate(c.createdAt)} — <strong style={{ color: "#f59e0b" }}>{c.score}</strong>
                       </div>
                     ))}
                   </div>

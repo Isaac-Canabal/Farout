@@ -234,6 +234,21 @@ export default function EscaleraModal({ onClose }: EscaleraModalProps) {
         });
       }
 
+      // Añadir notas recientes del Diario
+      const notesQuery = query(
+        collection(db, "notes"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(10)
+      );
+      const notesSnap = await getDocs(notesQuery);
+      notesSnap.forEach((n) => {
+        const d = n.data();
+        if (d.title || d.description) {
+          messageLines.push(`[Nota de Diario]: Título: "${d.title}" - Descripción: "${d.description}" (Estado de ánimo: ${d.mood}/4)`);
+        }
+      });
+
       const messagesText =
         messageLines.length > 0
           ? messageLines.join("\n")

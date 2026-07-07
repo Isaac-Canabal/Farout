@@ -36,6 +36,7 @@ import {
   buildSustainedDistressNote,
   localCrisisKeywordCheck,
 } from "@/lib/prompts";
+import { trackUsage } from "@/app/api/usage/route";
 
 // ─────────────────────────────────────────────────────────────────────
 // RATE LIMITING — Mapa en memoria por IP
@@ -318,6 +319,7 @@ export async function POST(request: NextRequest) {
     let chatModelIndex = 0;
     let usingClaude = false;
     let chatSuccess = false;
+    let modelUsed = "unknown";
 
     while (chatModelIndex < 6 && !chatSuccess) { // 3 Gemini + 3 Claude
       try {
@@ -367,6 +369,7 @@ export async function POST(request: NextRequest) {
 
           const result = await chat.sendMessage(messageContent);
           responseText = result.response.text();
+          modelUsed = chatModelIndex === 0 ? "gemini-2.5-flash" : `gemini-fallback-${chatModelIndex}`;
           chatSuccess = true;
         } else {
           // Intentar con Claude
@@ -387,6 +390,7 @@ export async function POST(request: NextRequest) {
             messages: [...claudeHistory, { role: "user" as const, content: userPrompt }],
           });
           responseText = result.content[0]?.type === "text" ? result.content[0].text : "";
+          modelUsed = `claude-${claudeModel.model}`;
           chatSuccess = true;
         }
       } catch (chatError: any) {
@@ -464,6 +468,10 @@ export async function POST(request: NextRequest) {
     // RESPUESTA FINAL
     // ═══════════════════════════════════════════════════════
 
+    // Track usage for the user
+    const userIdFromToken = idToken.substring(0, 20); // simple identifier
+    trackUsage(userIdFromToken, modelUsed);
+
     return NextResponse.json({
       text: responseText,
       isCrisis,
@@ -471,6 +479,7 @@ export async function POST(request: NextRequest) {
       distressThemes,
       techniques,
       crisisReasoning: isCrisis ? crisisReasoning : undefined,
+      modelUsed,
     });
 
   } catch (error: any) {
