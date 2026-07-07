@@ -239,7 +239,8 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
       flex: 1,
       display: "flex",
       flexDirection: "column",
-      height: "100vh",
+      height: "100%",
+      minHeight: 0,
       position: "relative",
     }}>
       {/* Disclaimer Banner at the top */}
