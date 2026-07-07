@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { X, Settings, Moon, Sun, Flame, Cpu, Check, Activity } from "lucide-react";
+import { X, Settings, Moon, Sun, Flame, Cpu, Check, Activity, Plus, Trash2, Edit2 } from "lucide-react";
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -21,6 +21,12 @@ interface UsageData {
     timeRemainingSeconds: number;
     modelsUsed: Record<string, number>;
   };
+}
+
+interface Mood {
+  value: number;
+  label: string;
+  color: string;
 }
 
 const THEMES = [
@@ -146,12 +152,27 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [activeModel, setActiveModel] = useState("gemini-flash");
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
+  const [customMoods, setCustomMoods] = useState<Mood[]>([]);
+  const [editingMood, setEditingMood] = useState<Mood | null>(null);
+  const [showMoodEditor, setShowMoodEditor] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("faro-theme") || "dark";
     const savedModel = localStorage.getItem("faro-model") || "gemini-flash";
+    const savedMoods = localStorage.getItem("faro-moods");
     setActiveTheme(savedTheme);
     setActiveModel(savedModel);
+    if (savedMoods) {
+      setCustomMoods(JSON.parse(savedMoods));
+    } else {
+      setCustomMoods([
+        { value: 0, label: "Muy Mal", color: "#ef4444" },
+        { value: 1, label: "Mal", color: "#f97316" },
+        { value: 2, label: "Normal", color: "#eab308" },
+        { value: 3, label: "Bien", color: "#84cc16" },
+        { value: 4, label: "Muy Bien", color: "#22c55e" },
+      ]);
+    }
     fetchUsage();
   }, []);
 
@@ -181,6 +202,42 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const handleModelSelect = (id: string) => {
     setActiveModel(id);
     localStorage.setItem("faro-model", id);
+  };
+
+  const handleAddMood = () => {
+    const newValue = customMoods.length;
+    setEditingMood({ value: newValue, label: "", color: "#22c55e" });
+    setShowMoodEditor(true);
+  };
+
+  const handleEditMood = (mood: Mood) => {
+    setEditingMood(mood);
+    setShowMoodEditor(true);
+  };
+
+  const handleDeleteMood = (value: number) => {
+    const newMoods = customMoods.filter(m => m.value !== value);
+    setCustomMoods(newMoods);
+    localStorage.setItem("faro-moods", JSON.stringify(newMoods));
+  };
+
+  const handleSaveMood = () => {
+    if (!editingMood) return;
+    
+    let newMoods;
+    const existingIndex = customMoods.findIndex(m => m.value === editingMood.value);
+    
+    if (existingIndex >= 0) {
+      newMoods = [...customMoods];
+      newMoods[existingIndex] = editingMood;
+    } else {
+      newMoods = [...customMoods, editingMood];
+    }
+    
+    setCustomMoods(newMoods);
+    localStorage.setItem("faro-moods", JSON.stringify(newMoods));
+    setShowMoodEditor(false);
+    setEditingMood(null);
   };
 
   return (
@@ -435,6 +492,113 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
           </section>
 
+          {/* Moods Section */}
+          <section>
+            <div style={{ marginBottom: "0.85rem" }}>
+              <h4
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: "700",
+                  color: "var(--text-primary)",
+                  marginBottom: "0.2rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Estados de Animo
+              </h4>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                Personaliza los estados de ánimo para tu diario y notas.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {customMoods.map((mood) => (
+                <div
+                  key={mood.value}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.75rem 1rem",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "10px",
+                    background: "rgba(255, 255, 255, 0.02)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "50%",
+                      background: mood.color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ flex: 1, fontSize: "0.88rem", color: "var(--text-primary)" }}>
+                    {mood.label}
+                  </span>
+                  <button
+                    onClick={() => handleEditMood(mood)}
+                    style={{
+                      padding: "0.4rem",
+                      border: "none",
+                      borderRadius: "6px",
+                      background: "transparent",
+                      color: "var(--text-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    className="glass-hover"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMood(mood.value)}
+                    style={{
+                      padding: "0.4rem",
+                      border: "none",
+                      borderRadius: "6px",
+                      background: "transparent",
+                      color: "var(--text-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    className="glass-hover"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={handleAddMood}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 1rem",
+                  border: "1px dashed var(--border-subtle)",
+                  borderRadius: "10px",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  fontSize: "0.88rem",
+                  transition: "all 0.2s ease",
+                }}
+                className="glass-hover"
+              >
+                <Plus size={16} />
+                Agregar estado de ánimo
+              </button>
+            </div>
+          </section>
+
           {/* AI Usage / Consumption Section */}
           <section>
             <div style={{ marginBottom: "0.85rem" }}>
@@ -581,6 +745,111 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           </button>
         </div>
       </div>
+
+      {/* Mood Editor Modal */}
+      {showMoodEditor && editingMood && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowMoodEditor(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="glass"
+            style={{
+              padding: "1.5rem",
+              borderRadius: "16px",
+              maxWidth: "400px",
+              width: "90%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>
+              {customMoods.find(m => m.value === editingMood.value) ? "Editar Estado" : "Nuevo Estado"}
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  value={editingMood.label}
+                  onChange={(e) => setEditingMood({ ...editingMood, label: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-subtle)",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                  Color
+                </label>
+                <input
+                  type="color"
+                  value={editingMood.color}
+                  onChange={(e) => setEditingMood({ ...editingMood, color: e.target.value })}
+                  style={{
+                    width: "100%",
+                    height: "40px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-subtle)",
+                    background: "transparent",
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <button
+                onClick={() => setShowMoodEditor(false)}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-subtle)",
+                  background: "transparent",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveMood}
+                disabled={!editingMood.label.trim()}
+                className="btn-primary"
+                style={{
+                  flex: 1,
+                  padding: "0.75rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  opacity: !editingMood.label.trim() ? 0.5 : 1,
+                }}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

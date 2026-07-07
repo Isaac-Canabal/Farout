@@ -1,21 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { X, CheckCircle2 } from "lucide-react";
+import { X, CheckCircle2, Frown, Meh, Smile, Heart, Zap } from "lucide-react";
 
 interface NotesModalProps {
   onClose: () => void;
 }
 
-const MOODS = [
-  { value: 0, label: "Muy Mal", emoji: "😞", color: "#ef4444" },
-  { value: 1, label: "Mal", emoji: "🙁", color: "#f97316" },
-  { value: 2, label: "Normal", emoji: "😐", color: "#eab308" },
-  { value: 3, label: "Bien", emoji: "🙂", color: "#84cc16" },
-  { value: 4, label: "Muy Bien", emoji: "😄", color: "#22c55e" },
+interface Mood {
+  value: number;
+  label: string;
+  color: string;
+}
+
+const DEFAULT_MOODS: Mood[] = [
+  { value: 0, label: "Muy Mal", color: "#ef4444" },
+  { value: 1, label: "Mal", color: "#f97316" },
+  { value: 2, label: "Normal", color: "#eab308" },
+  { value: 3, label: "Bien", color: "#84cc16" },
+  { value: 4, label: "Muy Bien", color: "#22c55e" },
 ];
 
 export default function NotesModal({ onClose }: NotesModalProps) {
@@ -23,9 +29,17 @@ export default function NotesModal({ onClose }: NotesModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [mood, setMood] = useState<number | null>(null);
+  const [moods, setMoods] = useState<Mood[]>(DEFAULT_MOODS);
   
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const savedMoods = localStorage.getItem("faro-moods");
+    if (savedMoods) {
+      setMoods(JSON.parse(savedMoods));
+    }
+  }, []);
 
   const handleSave = async () => {
     if (!user || mood === null || !title.trim() || !description.trim()) return;
@@ -105,7 +119,7 @@ export default function NotesModal({ onClose }: NotesModalProps) {
               ¿Cómo te sientes en este momento? *
             </label>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
-              {MOODS.map((m) => (
+              {moods.map((m: Mood) => (
                 <button
                   key={m.value}
                   onClick={() => setMood(m.value)}
@@ -124,7 +138,15 @@ export default function NotesModal({ onClose }: NotesModalProps) {
                   }}
                   className="glass-hover"
                 >
-                  <span style={{ fontSize: "1.5rem" }}>{m.emoji}</span>
+                  <div
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "50%",
+                      background: m.color,
+                      flexShrink: 0,
+                    }}
+                  />
                   <span style={{ fontSize: "0.75rem", color: mood === m.value ? m.color : "var(--text-secondary)", fontWeight: mood === m.value ? "600" : "400" }}>
                     {m.label}
                   </span>

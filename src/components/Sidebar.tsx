@@ -26,6 +26,8 @@ import {
   Settings,
   BarChart2,
   BookOpen,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -58,6 +60,7 @@ export default function Sidebar({
   const { user, logout } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toolsExpanded, setToolsExpanded] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -369,9 +372,17 @@ export default function Sidebar({
           flexShrink: 0,
         }}
       >
-        <span
+        <button
+          onClick={() => setToolsExpanded(!toolsExpanded)}
           style={{
+            width: "100%",
             padding: "0.35rem 0.6rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
             fontSize: "0.7rem",
             fontWeight: "600",
             color: "var(--text-muted)",
@@ -379,38 +390,43 @@ export default function Sidebar({
             letterSpacing: "0.06em",
           }}
         >
-          Herramientas
-        </span>
-
-        <button onClick={onOpenCheckIn} style={navBtnStyle} className="glass-hover">
-          <Activity size={15} style={{ flexShrink: 0 }} />
-          Autoevaluacion (PHQ-9 / GAD-7)
+          <span>Herramientas</span>
+          {toolsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 
-        <button onClick={onOpenTrends} style={navBtnStyle} className="glass-hover">
-          <TrendingUp size={15} style={{ flexShrink: 0 }} />
-          Mis Tendencias
-        </button>
+        {toolsExpanded && (
+          <>
+            <button onClick={onOpenCheckIn} style={navBtnStyle} className="glass-hover">
+              <Activity size={15} style={{ flexShrink: 0 }} />
+              Autoevaluacion (PHQ-9 / GAD-7)
+            </button>
 
-        <button onClick={onOpenEscalera} style={navBtnStyle} className="glass-hover">
-          <BarChart2 size={15} style={{ flexShrink: 0 }} />
-          La Escalera
-        </button>
+            <button onClick={onOpenTrends} style={navBtnStyle} className="glass-hover">
+              <TrendingUp size={15} style={{ flexShrink: 0 }} />
+              Mis Tendencias
+            </button>
 
-        <button onClick={onOpenNotes} style={navBtnStyle} className="glass-hover">
-          <BookOpen size={15} style={{ flexShrink: 0 }} />
-          Diario / Notas
-        </button>
+            <button onClick={onOpenEscalera} style={navBtnStyle} className="glass-hover">
+              <BarChart2 size={15} style={{ flexShrink: 0 }} />
+              La Escalera
+            </button>
 
-        <button onClick={onOpenPrivacy} style={navBtnStyle} className="glass-hover">
-          <Shield size={15} style={{ flexShrink: 0 }} />
-          Privacidad y Terminos
-        </button>
+            <button onClick={onOpenNotes} style={navBtnStyle} className="glass-hover">
+              <BookOpen size={15} style={{ flexShrink: 0 }} />
+              Diario / Notas
+            </button>
 
-        <button onClick={onOpenSettings} style={navBtnStyle} className="glass-hover">
-          <Settings size={15} style={{ flexShrink: 0 }} />
-          Configuracion
-        </button>
+            <button onClick={onOpenPrivacy} style={navBtnStyle} className="glass-hover">
+              <Shield size={15} style={{ flexShrink: 0 }} />
+              Privacidad y Terminos
+            </button>
+
+            <button onClick={onOpenSettings} style={navBtnStyle} className="glass-hover">
+              <Settings size={15} style={{ flexShrink: 0 }} />
+              Configuracion
+            </button>
+          </>
+        )}
       </div>
 
       {/* User profile / LogOut */}
