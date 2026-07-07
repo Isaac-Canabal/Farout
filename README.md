@@ -1,64 +1,54 @@
-# Faro — Acompañamiento Emocional Inteligente
+# Faro — Acompañamiento Emocional
 
-Faro es una aplicación web responsiva (PWA ready) diseñada como espacio seguro de desahogo, contención y orientación inicial en salud mental. El proyecto combina un sistema de IA empática con un motor híbrido de seguridad de crisis no desactivable, autoevaluaciones psicológicas validadas (PHQ-9/GAD-7) con visualización de tendencias, y una representación gráfica interactiva de la trayectoria emocional del usuario llamada "La Escalera".
-
-Este proyecto está estructurado con altos estándares de desarrollo, seguridad y diseño UX/UI móvil-primero para servir como portafolio profesional de ingeniería de software.
+Faro es una aplicación web responsiva diseñada como espacio de desahogo, contención y orientación inicial en situaciones de malestar emocional. Integra un chat interactivo con IA, un motor híbrido de seguridad de crisis no desactivable, autoevaluaciones psicológicas basadas en escalas clínicas (PHQ-9 y GAD-7) y una representación gráfica de la trayectoria afectiva del usuario llamada "La Escalera".
 
 ---
 
-## Características Principales
+## Características Técnicas
 
-### 1. Sistema Híbrido de Seguridad y Contención de Crisis (No Desactivable)
-La seguridad es la prioridad número uno. Faro integra una capa de detección de crisis de salud mental robusta e inalterable:
-*   **Filtro local de palabras clave de respaldo**: Detección determinista e instantánea en el servidor.
-*   **Clasificador con Inteligencia Artificial**: Detección semántica de ideas de autolesión o suicidio mediante prompts estructurados con salida JSON.
-*   **Inyección Prioritaria de Canales Oficiales**: En caso de alerta, inyecta de forma prioritaria los recursos oficiales de atención en Colombia (Línea 106 y 123) y activa banderas de alerta visuales.
+### 1. Detección de Crisis y Protocolo de Seguridad (No Desactivable)
+La aplicación cuenta con una capa de análisis server-side para identificar señales de riesgo de autolesión o suicidio:
+*   **Filtro local de palabras clave**: Evaluación determinista mediante expresiones regulares locales.
+*   **Clasificador mediante IA**: Clasificación semántica del nivel de riesgo estructurada a través de prompts con salida en formato JSON.
+*   **Inyección de recursos de emergencia**: Ante una detección positiva, el servidor anexa de manera prioritaria los datos de contacto de la Línea 106 y Línea 123 de Colombia, activando banderas visuales en la interfaz.
 
-### 2. Autoevaluaciones Validadas (PHQ-9 y GAD-7)
-*   Formularios paso a paso interactivos adaptados para dispositivos móviles (diseño *bottom-sheet*).
-*   **PHQ-9 (Cuestionario sobre la Salud del Paciente)**: Mide severidad de síntomas depresivos.
-*   **GAD-7 (Escala del Trastorno de Ansiedad Generalizada)**: Mide niveles de ansiedad.
-*   **Alerta de Riesgo en PHQ-9 (Pregunta 9)**: Si el usuario reporta ideación autolesiva en la última pregunta, el sistema muestra inmediatamente una advertencia visual destacada con los canales de emergencia humanos.
+### 2. Autoevaluaciones (PHQ-9 y GAD-7)
+*   **PHQ-9 (Patient Health Questionnaire)**: Cuestionario estandarizado de 9 preguntas sobre síntomas de depresión.
+*   **GAD-7 (Generalized Anxiety Disorder)**: Escala de 7 preguntas para evaluar niveles de ansiedad.
+*   **Alerta en Pregunta 9**: Si la respuesta a la novena pregunta del PHQ-9 (ideación autolesiva) es mayor a 0, la interfaz despliega automáticamente una tarjeta informativa destacada con canales de atención humana.
 
-### 3. Mis Tendencias (Gráficos en Tiempo Real)
-*   Consulta segura a Firestore para recuperar el historial del usuario.
-*   Gráfico de líneas interactivo e implementado con SVG puro (sin dependencias externas pesadas) que se renderiza dinámicamente.
-*   Cálculo automático de la severidad del estado de ánimo y ansiedad de acuerdo a escalas clínicas oficiales.
+### 3. Historial de Tendencias
+*   Consulta y recuperación de datos de autoevaluaciones desde Firestore.
+*   Gráfico de líneas dinámico implementado mediante SVG nativo sin dependencias de librerías de gráficos pesadas.
+*   Cálculo automático del nivel de severidad de acuerdo con los rangos de puntuación clínicos oficiales.
 
-### 4. La Escalera (Visualización Emocional Histórica)
-*   **Análisis Narrativo mediante IA**: Al presionar "Actualizar", una ruta de API recopila los mensajes del historial de chat y extrae de forma segura los momentos emocionales clave (fecha, descripción breve, nivel emocional del 0 al 8 y dirección).
-*   **Renderizado SVG Animado**: Basado en un diseño a medida, dibuja curvas bezier, líneas de conexión y estados de ánimo con scroll horizontal responsivo.
-*   **Respeto a la Privacidad**: El prompt del sistema sanitiza la información sensible de forma automática, omitiendo nombres propios de terceros y enfocándose solo en la narrativa afectiva.
+### 4. La Escalera Emocional
+*   **Extracción de hitos**: Una ruta de API (/api/escalera) analiza el historial de mensajes de la conversación y extrae momentos significativos representados en objetos `{ date, who, desc, level, type }`.
+*   **Visualización SVG interactiva**: Renderiza los momentos en una línea de tiempo curva e interactiva con scroll horizontal.
+*   **Privacidad**: El prompt del analizador de hitos omite nombres propios o datos de identificación de terceros para enfocarse únicamente en el flujo del estado afectivo.
 
-### 5. Configuración Personalizada de Interfaz e IA
-*   **Selector de Temas**: Soporte para tres temas visuales (*Oscuro profundo*, *Cálido ámbar* y *Suave claro*) que se sincronizan en tiempo real mediante variables de CSS (:root) y se persisten en `localStorage`.
-*   **Selector de Modelo de IA**: Posibilidad de alternar el motor de lenguaje entre *Gemini Flash* (predeterminado), *Gemini Pro* y *Claude Sonnet*.
+### 5. Configuración
+*   **Temas visuales**: Tres variaciones de color (*Oscuro profundo*, *Cálido ámbar* y *Suave claro*) controlados a través de variables CSS (:root) y persistidos en `localStorage`.
+*   **Selección de modelo de lenguaje**: Alterna la llamada del chat entre *Gemini Flash*, *Gemini Pro* y *Claude Sonnet*.
 
-### 6. Diseño Responsivo y Optimización Móvil Nativa
-*   Uso de `100dvh` (Dynamic Viewport Height) para evitar que la barra de navegación del navegador móvil tape la entrada del chat.
-*   Elementos touch-friendly con objetivos de pulsación (touch targets) de al menos 44px-48px de alto.
-*   Sidebar animado tipo cajón (*drawer*) con overlay translúcido para móviles.
-*   Prevención de zoom-in molesto al hacer foco en inputs vía configuración de Viewport de Next.js 16.
-
----
-
-## Arquitectura y Stack Técnico
-
-*   **Frontend**: Next.js 16 (React 19, App Router) optimizado con TypeScript.
-*   **Estilos**: Vanilla CSS con variables CSS responsivas aplicadas a un sistema de diseño premium (glassmorphism, gradientes suaves y micro-animaciones).
-*   **Autenticación**: Firebase Authentication con Google Provider (configurado para solicitar selección de cuenta).
-*   **Base de Datos**: Google Cloud Firestore.
-*   **Modelos de IA**: Sistema de fallback jerárquico multicapa entre Google Gemini API (`gemini-2.5-flash`, `gemini-2.5-pro`) y Anthropic Claude API (`claude-3-5-sonnet`) para garantizar alta disponibilidad incluso ante límites de cuota (Rate Limits).
+### 6. Interfaz Móvil y Responsiva
+*   Alineación de modales responsiva (centrados en pantallas de escritorio, y en formato *bottom-sheet* inferior en pantallas móviles).
+*   Uso de la unidad `100dvh` (Dynamic Viewport Height) para evitar el solapamiento con la barra de navegación del navegador móvil.
+*   Áreas táctiles optimizadas a un tamaño mínimo de 44px-48px.
+*   Prevención de zoom-in automático al enfocar inputs a nivel de configuración del Viewport.
 
 ---
 
-## Seguridad de Datos y Buenas Prácticas
+## Arquitectura y Stack
 
-### Cero Secretos Hardcodeados
-Todas las llaves de Firebase Client y las API keys de Gemini y Claude se inyectan a través de variables de entorno (`.env.local` en desarrollo, variables del entorno en producción) y jamás se exponen en el código fuente.
+*   **Frontend**: Next.js 16 (React 19, App Router) y TypeScript.
+*   **Base de datos y autenticación**: Firebase Authentication (Google Sign-In) y Cloud Firestore.
+*   **Modelos de IA**: Lógica de fallbacks estructurada en cascada entre Google Gemini API y Anthropic Claude API para mitigar fallas por cuota (rate limits) en el servidor.
 
-### Reglas de Seguridad de Firestore (`firestore.rules`)
-Las conversaciones, los mensajes, las autoevaluaciones y la escalera emocional del usuario están protegidos mediante políticas estrictas basadas en el UID del usuario autenticado:
+---
+
+## Reglas de Seguridad en Base de Datos (`firestore.rules`)
+Las conversaciones, los mensajes y los registros de autoevaluación están protegidos con reglas basadas en el identificador único del usuario (`request.auth.uid`):
 ```javascript
 rules_version = '2';
 service cloud.firestore {
@@ -84,12 +74,11 @@ service cloud.firestore {
 
 ---
 
-## Configuración y Arranque en Local
+## Configuración Local
 
 ### 1. Variables de Entorno
-Crea un archivo `.env.local` en la raíz del proyecto con la siguiente estructura:
+Crea un archivo `.env.local` en la raíz del proyecto:
 ```env
-# Firebase Client Config (Public keys)
 NEXT_PUBLIC_FIREBASE_API_KEY=tu_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_auth_domain
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu_project_id
@@ -97,24 +86,23 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_storage_bucket
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
 
-# Server-Side Keys (Secret keys - NEVER client-side)
 GEMINI_API_KEY=tu_gemini_api_key
-CLAUDE_API_KEY=tu_claude_api_key # Opcional, para fallback
+CLAUDE_API_KEY=tu_claude_api_key
 ```
 
-### 2. Comandos de Desarrollo
+### 2. Comandos de desarrollo
 ```bash
 # Instalar dependencias
 npm install
 
-# Levantar servidor de desarrollo
+# Levantar servidor local
 npm run dev
 
-# Chequear tipos TypeScript
+# Validación de TypeScript
 npx tsc --noEmit
 ```
 
 ---
 
 > [!WARNING]
-> **Cumplimiento Legal (Colombia)**: Esta aplicación es un prototipo tecnológico enfocado en la salud mental. Antes de una implementación comercial real en territorio colombiano, se debe realizar una auditoría legal completa según la **Ley 1581 de 2012 (Habeas Data)** para el tratamiento seguro de datos sensibles de salud.
+> **Cumplimiento Normativo (Colombia)**: Esta aplicación es un prototipo experimental. Previo a una implementación real en producción en Colombia, requiere una auditoría legal en los términos de la **Ley 1581 de 2012** sobre el tratamiento de datos sensibles de salud.
