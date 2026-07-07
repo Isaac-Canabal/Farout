@@ -11,6 +11,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { X, TrendingUp, Activity, Calendar, AlertCircle } from "lucide-react";
+import { getSeverityLabel } from "@/lib/scoring";
 
 interface TrendsModalProps {
   onClose: () => void;
@@ -30,20 +31,6 @@ function formatDate(ts: any): string {
   return d.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
 }
 
-function getSeverityLabel(type: "phq9" | "gad7", score: number): { label: string; color: string } {
-  if (type === "phq9") {
-    if (score <= 4) return { label: "Minima", color: "#4a7c59" };
-    if (score <= 9) return { label: "Leve", color: "#a0a030" };
-    if (score <= 14) return { label: "Moderada", color: "#d08040" };
-    if (score <= 19) return { label: "Moderadamente severa", color: "#c05030" };
-    return { label: "Severa", color: "#c0432f" };
-  } else {
-    if (score <= 4) return { label: "Minima", color: "#4a7c59" };
-    if (score <= 9) return { label: "Leve", color: "#a0a030" };
-    if (score <= 14) return { label: "Moderada", color: "#d08040" };
-    return { label: "Severa", color: "#c0432f" };
-  }
-}
 
 function MiniChart({
   data,
@@ -141,9 +128,11 @@ export default function TrendsModal({ onClose, onOpenCheckIn }: TrendsModalProps
 
   const phq9 = checkins.filter((c) => c.type === "phq9");
   const gad7 = checkins.filter((c) => c.type === "gad7");
+  const daily = checkins.filter((c) => c.type === "daily");
 
   const lastPhq9 = phq9[phq9.length - 1];
   const lastGad7 = gad7[gad7.length - 1];
+  const lastDaily = daily[daily.length - 1];
 
   return (
     <div
@@ -458,6 +447,104 @@ export default function TrendsModal({ onClose, onOpenCheckIn }: TrendsModalProps
                         }}
                       >
                         {formatDate(c.createdAt)} — <strong style={{ color: "var(--secondary)" }}>{c.score}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Daily Wellness Section */}
+              {daily.length > 0 && (
+                <div
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "14px",
+                    padding: "1.1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.9rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.8rem",
+                        fontWeight: "600",
+                        color: "#34d399",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Bienestar Diario
+                    </span>
+                    {lastDaily && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span
+                          style={{
+                            fontSize: "1.5rem",
+                            fontWeight: "700",
+                            color: "#34d399",
+                          }}
+                        >
+                          {lastDaily.score}
+                        </span>
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "0.7rem",
+                              color: getSeverityLabel("daily", lastDaily.score, 15).color,
+                              fontWeight: "600",
+                            }}
+                          >
+                            {getSeverityLabel("daily", lastDaily.score, 15).label}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.65rem",
+                              color: "var(--text-muted)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "3px",
+                            }}
+                          >
+                            <Calendar size={10} />
+                            {formatDate(lastDaily.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {daily.length >= 2 ? (
+                    <MiniChart data={daily} color="#34d399" max={15} />
+                  ) : (
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+                      Necesitas al menos 2 registros para ver la grafica.
+                    </p>
+                  )}
+
+                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                    {daily.slice(-6).map((c) => (
+                      <div
+                        key={c.id}
+                        style={{
+                          fontSize: "0.72rem",
+                          padding: "0.2rem 0.55rem",
+                          borderRadius: "20px",
+                          background: "rgba(52, 211, 153, 0.07)",
+                          border: "1px solid rgba(52, 211, 153, 0.2)",
+                          color: "var(--text-secondary)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatDate(c.createdAt)} — <strong style={{ color: "#34d399" }}>{c.score}</strong>
                       </div>
                     ))}
                   </div>

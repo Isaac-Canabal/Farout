@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { X, ChevronRight, ChevronLeft, Award, HelpCircle, ShieldAlert } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Award, ShieldAlert, CheckCircle } from "lucide-react";
+import { getSeverityLabel } from "@/lib/scoring";
 
 interface CheckInModalProps {
   onClose: () => void;
@@ -39,25 +40,60 @@ const options = [
   { label: "Casi todos los días", value: 3 }
 ];
 
+const dailyQuestionsPool = [
+  "¿Cómo calificarías tu nivel de energía física hoy?",
+  "¿Qué tan motivado/a te sientes para realizar tus tareas diarias?",
+  "¿Cómo describirías la calidad de tu sueño anoche?",
+  "¿Qué tan tranquilo/a o en paz te has sentido emocionalmente hoy?",
+  "¿En qué medida sientes que puedes manejar el estrés o los desafíos de hoy?",
+  "¿Cómo evaluarías tu nivel de concentración o claridad mental?",
+  "¿Qué tan conectado/a te sientes con las personas que te rodean?",
+  "¿Cómo calificarías tu estado de ánimo general en este momento?",
+  "¿En qué grado has sentido esperanza o ilusión por el futuro cercano?",
+  "¿Cómo evaluarías tu nivel de tensión muscular o relajación corporal?",
+  "¿Qué tanta paciencia sientes que tienes hoy frente a las frustraciones?",
+  "¿Cómo describirías tu apetito o hábitos alimenticios de hoy?"
+];
+
+const dailyOptions = [
+  { label: "Muy bajo / Mal", value: 0 },
+  { label: "Bajo / Regular", value: 1 },
+  { label: "Medio / Bien", value: 2 },
+  { label: "Alto / Muy Bien", value: 3 }
+];
+
 export default function CheckInModal({ onClose }: CheckInModalProps) {
   const { user } = useAuth();
   
-  // Selection states: 'select' | 'phq9' | 'gad7' | 'results'
-  const [step, setStep] = useState<"select" | "phq9" | "gad7" | "results">("select");
+  // Selection states: 'select' | 'phq9' | 'gad7' | 'daily' | 'results'
+  const [step, setStep] = useState<"select" | "phq9" | "gad7" | "daily" | "results">("select");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [savedScore, setSavedScore] = useState<number | null>(null);
-  const [savedType, setSavedType] = useState<"phq9" | "gad7" | null>(null);
+  const [savedType, setSavedType] = useState<"phq9" | "gad7" | "daily" | null>(null);
   const [hasHighRiskAnswer, setHasHighRiskAnswer] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Custom random questions for daily
+  const [activeDailyQuestions, setActiveDailyQuestions] = useState<string[]>([]);
 
-  const currentQuestions = step === "phq9" ? phq9Questions : gad7Questions;
+  const currentQuestions = step === "phq9" ? phq9Questions : step === "gad7" ? gad7Questions : activeDailyQuestions;
+  const currentOptions = step === "daily" ? dailyOptions : options;
 
-  const handleStart = (type: "phq9" | "gad7") => {
+  const handleStart = (type: "phq9" | "gad7" | "daily") => {
     setStep(type);
     setCurrentQuestionIndex(0);
-    setAnswers(new Array(type === "phq9" ? phq9Questions.length : gad7Questions.length).fill(-1));
     setHasHighRiskAnswer(false);
+    
+    if (type === "daily") {
+      // Shuffle and pick 5 random questions
+      const shuffled = [...dailyQuestionsPool].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, 5);
+      setActiveDailyQuestions(selected);
+      setAnswers(new Array(5).fill(-1));
+    } else {
+      setAnswers(new Array(type === "phq9" ? phq9Questions.length : gad7Questions.length).fill(-1));
+    }
   };
 
   const handleAnswerSelect = (val: number) => {
@@ -94,17 +130,25 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
     setIsSaving(true);
     
     const score = answers.reduce((a, b) => a + b, 0);
-    const type = step === "phq9" ? "phq9" : "gad7";
+    const type = step === "phq9" ? "phq9" : step === "gad7" ? "gad7" : "daily";
 
     try {
-      await addDoc(collection(db, "checkins"), {
+      const docData: any = {
         userId: user.uid,
         type,
         score,
         answers,
         hasHighRisk: hasHighRiskAnswer,
         createdAt: serverTimestamp()
-      });
+      };
+      
+      // Save which daily questions were asked so history makes sense
+      if (type === "daily") {
+        docData.questions = activeDailyQuestions;
+        docData.maxScore = activeDailyQuestions.length * 3;
+      }
+
+      await addDoc(collection(db, "checkins"), docData);
 
       setSavedScore(score);
       setSavedType(type);
@@ -227,18 +271,44 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
                   Evalúa niveles de preocupación, tensión nerviosa y dificultad para relajarse (7 preguntas).
                 </span>
               </button>
+
+              {/* Daily Wellness Button Card */}
+              <button 
+                onClick={() => handleStart("daily")}
+                style={{
+                  padding: "1.25rem",
+                  textAlign: "left",
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.4rem",
+                  transition: "all 0.2s ease"
+                }}
+                className="glass-hover"
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                  <span style={{ fontWeight: "600", fontSize: "1rem", color: "#34d399" }}>Chequeo de Bienestar Diario</span>
+                  <ChevronRight size={16} color="var(--text-muted)" />
+                </div>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.4" }}>
+                  Un seguimiento rápido y variado (5 preguntas aleatorias) sobre tu energía, motivación y estado general.
+                </span>
+              </button>
             </div>
           </div>
         )}
 
-        {/* Step: Questions (PHQ-9 or GAD-7) */}
-        {(step === "phq9" || step === "gad7") && (
+        {/* Step: Questions */}
+        {(step === "phq9" || step === "gad7" || step === "daily") && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             
             {/* Header / Progress */}
             <div>
               <span style={{ fontSize: "0.75rem", fontWeight: "600", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                {step === "phq9" ? "Evaluación de Ánimo PHQ-9" : "Evaluación de Ansiedad GAD-7"}
+                {step === "phq9" ? "Evaluación de Ánimo PHQ-9" : step === "gad7" ? "Evaluación de Ansiedad GAD-7" : "Bienestar Diario"}
               </span>
               <h4 style={{ fontSize: "1.1rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.25rem" }}>
                 Pregunta {currentQuestionIndex + 1} de {currentQuestions.length}
@@ -249,7 +319,7 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
                 <div style={{
                   height: "100%",
                   width: `${((currentQuestionIndex + 1) / currentQuestions.length) * 100}%`,
-                  background: step === "phq9" ? "var(--primary)" : "var(--secondary)",
+                  background: step === "phq9" ? "var(--primary)" : step === "gad7" ? "var(--secondary)" : "#34d399",
                   transition: "width 0.3s ease"
                 }} />
               </div>
@@ -268,17 +338,20 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
               display: "flex",
               alignItems: "center"
             }}>
-              ¿Con qué frecuencia te ha molestado este problema durante las últimas 2 semanas?
-              <br />
-              <strong style={{ color: "var(--text-primary)", display: "block", marginTop: "0.5rem" }}>
+              {step !== "daily" && (
+                <>¿Con qué frecuencia te ha molestado este problema durante las últimas 2 semanas?<br /></>
+              )}
+              <strong style={{ color: "var(--text-primary)", display: "block", marginTop: step !== "daily" ? "0.5rem" : "0" }}>
                 {currentQuestions[currentQuestionIndex]}
               </strong>
             </div>
 
             {/* Options */}
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {options.map((opt) => {
+              {currentOptions.map((opt) => {
                 const isSelected = answers[currentQuestionIndex] === opt.value;
+                const highlightColor = step === "phq9" ? "var(--primary)" : step === "gad7" ? "var(--secondary)" : "#34d399";
+                const bgColor = step === "phq9" ? "rgba(56, 189, 248, 0.08)" : step === "gad7" ? "rgba(45, 212, 191, 0.08)" : "rgba(52, 211, 153, 0.08)";
                 return (
                   <button
                     key={opt.value}
@@ -287,15 +360,9 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
                       padding: "0.85rem 1.25rem",
                       borderRadius: "10px",
                       border: "1px solid",
-                      borderColor: isSelected 
-                        ? (step === "phq9" ? "var(--primary)" : "var(--secondary)") 
-                        : "var(--border-subtle)",
-                      background: isSelected 
-                        ? (step === "phq9" ? "rgba(56, 189, 248, 0.08)" : "rgba(45, 212, 191, 0.08)") 
-                        : "rgba(255,255,255,0.01)",
-                      color: isSelected 
-                        ? (step === "phq9" ? "var(--primary)" : "var(--secondary)") 
-                        : "var(--text-secondary)",
+                      borderColor: isSelected ? highlightColor : "var(--border-subtle)",
+                      background: isSelected ? bgColor : "rgba(255,255,255,0.01)",
+                      color: isSelected ? highlightColor : "var(--text-secondary)",
                       cursor: "pointer",
                       textAlign: "left",
                       fontWeight: isSelected ? "600" : "400",
@@ -353,26 +420,30 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
         )}
 
         {/* Step: Results */}
-        {step === "results" && (
+        {step === "results" && savedType && savedScore !== null && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", textAlign: "center" }}>
             
             <div style={{
               width: "56px",
               height: "56px",
               borderRadius: "50%",
-              background: savedType === "phq9" ? "rgba(56, 189, 248, 0.1)" : "rgba(45, 212, 191, 0.1)",
+              background: savedType === "phq9" ? "rgba(56, 189, 248, 0.1)" : savedType === "gad7" ? "rgba(45, 212, 191, 0.1)" : "rgba(52, 211, 153, 0.1)",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               alignSelf: "center",
             }}>
-              <Award size={28} color={savedType === "phq9" ? "var(--primary)" : "var(--secondary)"} />
+              {savedType === "daily" ? (
+                <CheckCircle size={28} color="#34d399" />
+              ) : (
+                <Award size={28} color={savedType === "phq9" ? "var(--primary)" : "var(--secondary)"} />
+              )}
             </div>
 
             <div>
               <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginBottom: "0.25rem" }}>Autoevaluación Completada</h3>
               <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase" }}>
-                {savedType === "phq9" ? "Escala de Ánimo PHQ-9" : "Escala de Ansiedad GAD-7"}
+                {savedType === "phq9" ? "Escala de Ánimo PHQ-9" : savedType === "gad7" ? "Escala de Ansiedad GAD-7" : "Bienestar Diario"}
               </span>
             </div>
 
@@ -381,25 +452,62 @@ export default function CheckInModal({ onClose }: CheckInModalProps) {
               border: "1px solid var(--border-subtle)",
               padding: "1.5rem",
               borderRadius: "16px",
-              display: "inline-block",
-              alignSelf: "center"
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.5rem",
+              alignItems: "center"
             }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", display: "block" }}>PUNTUACIÓN OBTENIDA</span>
-              <strong style={{
-                fontSize: "3rem",
-                fontWeight: "700",
-                color: savedType === "phq9" ? "var(--primary)" : "var(--secondary)"
-              }}>
-                {savedScore}
-              </strong>
-              <span style={{
-                fontSize: "0.8rem",
-                color: "var(--text-muted)",
-                display: "block",
-                marginTop: "0.25rem"
-              }}>
-                Máximo posible: {savedType === "phq9" ? 27 : 21}
+              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", display: "block" }}>
+                {savedType === "daily" ? "TU ÍNDICE DE BIENESTAR" : "PUNTUACIÓN OBTENIDA"}
               </span>
+              
+              <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
+                <strong style={{
+                  fontSize: "3rem",
+                  fontWeight: "700",
+                  color: savedType === "phq9" ? "var(--primary)" : savedType === "gad7" ? "var(--secondary)" : "#34d399"
+                }}>
+                  {savedScore}
+                </strong>
+                <span style={{ fontSize: "1.2rem", color: "var(--text-muted)" }}>
+                  / {savedType === "phq9" ? 27 : savedType === "gad7" ? 21 : 15}
+                </span>
+              </div>
+
+              {/* Lógica Cualitativa de Claridad */}
+              {(() => {
+                const maxScore = savedType === "phq9" ? 27 : savedType === "gad7" ? 21 : 15;
+                const severity = getSeverityLabel(savedType, savedScore, maxScore);
+                
+                return (
+                  <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.25rem", alignItems: "center" }}>
+                    <div style={{
+                      background: `${severity.color}20`,
+                      color: severity.color,
+                      padding: "0.4rem 1rem",
+                      borderRadius: "20px",
+                      fontWeight: "700",
+                      fontSize: "0.9rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      border: `1px solid ${severity.color}40`
+                    }}>
+                      {severity.label}
+                    </div>
+                    {severity.description && (
+                      <p style={{
+                        marginTop: "0.75rem",
+                        fontSize: "0.85rem",
+                        color: "var(--text-secondary)",
+                        lineHeight: "1.4",
+                        maxWidth: "90%"
+                      }}>
+                        {severity.description}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* High risk safety notification for PHQ-9 Q9 */}
