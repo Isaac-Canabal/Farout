@@ -2,6 +2,8 @@
 
 Faro es una aplicación web responsiva diseñada como espacio de desahogo, contención y orientación inicial en situaciones de malestar emocional. Integra un chat interactivo con IA, un motor híbrido de seguridad de crisis no desactivable, autoevaluaciones psicológicas basadas en escalas clínicas (PHQ-9 y GAD-7) y una representación gráfica de la trayectoria afectiva del usuario llamada "La Escalera".
 
+Por ahora solo esta disponible por web, puedes acceder mediante este enlace: faroout.netlify.app
+
 ---
 
 ## Características Técnicas
