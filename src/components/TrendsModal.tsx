@@ -20,7 +20,7 @@ interface TrendsModalProps {
 
 interface CheckIn {
   id: string;
-  type: "phq9" | "gad7";
+  type: "phq9" | "gad7" | "daily";
   score: number;
   createdAt: any;
 }
