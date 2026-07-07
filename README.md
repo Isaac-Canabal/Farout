@@ -4,7 +4,7 @@ Faro es una aplicación web responsiva diseñada como espacio de desahogo, conte
 
 Por ahora solo esta disponible por web, puedes acceder mediante este enlace: faroout.netlify.app
 
-<img width="124" height="153" alt="image" src="https://github.com/user-attachments/assets/314bc7c3-6062-42de-a36f-dc76f74f266d" />
+<img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/314bc7c3-6062-42de-a36f-dc76f74f266d" />
 
 ---
 
