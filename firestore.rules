@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ──────────────────────────────────────────────
+    // Conversaciones: solo el dueño puede CRUD
+    // ──────────────────────────────────────────────
+    match /conversations/{conversationId} {
+      // Crear: el campo userId del documento debe coincidir con el UID autenticado
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      // Leer, actualizar, borrar: el campo userId existente debe coincidir
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.userId == request.auth.uid;
+
+      // ──────────────────────────────────────────────
+      // Mensajes: heredan protección del documento padre.
+      // IMPORTANTE: las reglas de Firestore NO heredan automáticamente
+      // del documento padre. Esta regla lee explícitamente el documento
+      // de conversación para verificar la propiedad.
+      // ──────────────────────────────────────────────
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null
+                           && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
+      }
+    }
+
+    // ──────────────────────────────────────────────
+    // Check-ins de autoevaluación (PHQ-9, GAD-7)
+    // ──────────────────────────────────────────────
+    match /checkins/{checkinId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+      // No permitimos update/delete de autoevaluaciones para integridad del historial
+    }
+
+    // ──────────────────────────────────────────────
+    // Consentimiento de disclaimer (vinculado al userId)
+    // ──────────────────────────────────────────────
+    match /consents/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+  }
+}

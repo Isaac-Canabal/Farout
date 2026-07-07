@@ -1,0 +1,206 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Warm & Safe Palette for Emotional Support (Faro Theme) */
+  --bg-deep: #0f1419;
+  --bg-surface: #1a202c;
+  --bg-sidebar: #0d1117;
+  --bg-card: rgba(26, 32, 44, 0.5);
+  --bg-card-hover: rgba(45, 55, 72, 0.7);
+  
+  --border-subtle: rgba(148, 163, 184, 0.12);
+  --border-focus: rgba(251, 146, 60, 0.3);
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  
+  /* Warm Amber & Soft Coral for Safety & Warmth */
+  --primary: #fb923c;
+  --primary-hover: #fdba74;
+  --primary-glow: rgba(251, 146, 60, 0.2);
+  
+  --secondary: #f472b6;
+  --secondary-glow: rgba(244, 114, 182, 0.15);
+  
+  /* Message Bubbles - Warmer tones */
+  --bubble-user: linear-gradient(135deg, #ea580c, #db2777);
+  --bubble-bot: rgba(30, 41, 59, 0.6);
+  
+  /* Statuses */
+  --error: #ef4444;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --success: #10b981;
+  --warning: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Glassmorphism Classes */
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+}
+
+.glass-hover:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Keyframe Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(251, 146, 60, 0.35);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+.animate-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+.animate-float {
+  animation: float 5s infinite ease-in-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Chat Input styling and custom components */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #040810;
+  border: none;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(251, 146, 60, 0.35);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+}
+
+/* Typing Indicator Animation */
+.dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--text-secondary);
+  border-radius: 50%;
+  display: inline-block;
+  animation: blink 1.4s infinite both;
+  margin: 0 2px;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Modal Layout Rules */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(4, 8, 16, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Centered on desktop */
+  z-index: 1100;
+  padding: 1.5rem;
+}
+
+.modal-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px; /* Centered modal rounding on desktop */
+  max-height: 90vh;
+}
+
+@media (max-width: 767px) {
+  .modal-overlay {
+    align-items: flex-end; /* Bottom sheet on mobile */
+    padding: 0;
+  }
+  .modal-container {
+    border-radius: 20px 20px 0 0 !important; /* Top-only rounding for bottom sheets */
+    max-height: 92vh;
+  }
+}
+
