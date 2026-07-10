@@ -12,6 +12,7 @@ import TrendsModal from "@/components/TrendsModal";
 import SettingsModal from "@/components/SettingsModal";
 import EscaleraModal from "@/components/EscaleraModal";
 import NotesModal from "@/components/NotesModal";
+import JournalModal from "@/components/JournalModal";
 import { Menu, X } from "lucide-react";
 
 export default function Dashboard() {
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [showEscalera, setShowEscalera] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [showJournal, setShowJournal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -190,6 +192,7 @@ export default function Dashboard() {
             onOpenSettings={() => openModal(setShowSettings)}
             onOpenEscalera={() => openModal(setShowEscalera)}
             onOpenNotes={() => openModal(setShowNotes)}
+            onOpenJournal={() => openModal(setShowJournal)}
           />
         </div>
 
@@ -318,6 +321,7 @@ export default function Dashboard() {
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showEscalera && <EscaleraModal onClose={() => setShowEscalera(false)} />}
       {showNotes && <NotesModal onClose={() => setShowNotes(false)} />}
+      {showJournal && <JournalModal onClose={() => setShowJournal(false)} />}
     </>
   );
 }

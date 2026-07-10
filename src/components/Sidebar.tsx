@@ -39,6 +39,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onOpenEscalera: () => void;
   onOpenNotes: () => void;
+  onOpenJournal: () => void;
 }
 
 interface Conversation {
@@ -56,6 +57,7 @@ export default function Sidebar({
   onOpenSettings,
   onOpenEscalera,
   onOpenNotes,
+  onOpenJournal,
 }: SidebarProps) {
   const { user, logout } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -413,7 +415,12 @@ export default function Sidebar({
 
             <button onClick={onOpenNotes} style={navBtnStyle} className="glass-hover">
               <BookOpen size={15} style={{ flexShrink: 0 }} />
-              Diario / Notas
+              Nueva Nota
+            </button>
+
+            <button onClick={onOpenJournal} style={navBtnStyle} className="glass-hover">
+              <MessageSquare size={15} style={{ flexShrink: 0 }} />
+              Ver Diario
             </button>
 
             <button onClick={onOpenPrivacy} style={navBtnStyle} className="glass-hover">

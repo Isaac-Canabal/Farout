@@ -8,20 +8,6 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-interface UsageData {
-  models: {
-    id: string;
-    provider: string;
-    role: string;
-    freeLimit: string;
-    resetWindow: string;
-  }[];
-  usage: {
-    totalRequests: number;
-    timeRemainingSeconds: number;
-    modelsUsed: Record<string, number>;
-  };
-}
 
 interface Mood {
   value: number;
@@ -150,8 +136,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { user } = useAuth();
   const [activeTheme, setActiveTheme] = useState("dark");
   const [activeModel, setActiveModel] = useState("gemini-flash");
-  const [usageData, setUsageData] = useState<UsageData | null>(null);
-  const [loadingUsage, setLoadingUsage] = useState(true);
   const [customMoods, setCustomMoods] = useState<Mood[]>([]);
   const [editingMood, setEditingMood] = useState<Mood | null>(null);
   const [showMoodEditor, setShowMoodEditor] = useState(false);
@@ -182,26 +166,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
     if (savedGeminiKey) setUserGeminiKey(savedGeminiKey);
     if (savedClaudeKey) setUserClaudeKey(savedClaudeKey);
-    fetchUsage();
   }, []);
-
-  const fetchUsage = async () => {
-    if (!user) { setLoadingUsage(false); return; }
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch(`/api/usage?userId=${encodeURIComponent(user.uid.substring(0, 20))}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUsageData(data);
-      }
-    } catch (err) {
-      console.error("Error fetching usage:", err);
-    } finally {
-      setLoadingUsage(false);
-    }
-  };
 
   const handleThemeSelect = (id: string) => {
     setActiveTheme(id);
@@ -718,133 +683,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          {/* AI Usage / Consumption Section */}
-          <section>
-            <div style={{ marginBottom: "0.85rem" }}>
-              <h4
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: "700",
-                  color: "var(--text-primary)",
-                  marginBottom: "0.2rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Consumo de IA
-              </h4>
-              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                Tu consumo reciente y los modelos disponibles con sus limites gratuitos.
-              </p>
-            </div>
-
-            {loadingUsage ? (
-              <div style={{ padding: "1rem", textAlign: "center", display: "flex", gap: "6px", justifyContent: "center" }}>
-                <div className="dot" />
-                <div className="dot" />
-              </div>
-            ) : usageData ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {/* User stats summary */}
-                <div style={{
-                  padding: "1rem",
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: "12px",
-                  display: "flex",
-                  gap: "1.5rem",
-                  flexWrap: "wrap",
-                }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-                    <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      Solicitudes recientes
-                    </span>
-                    <span style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--primary)" }}>
-                      {usageData.usage.totalRequests}
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-                    <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      Reinicio de cuota en
-                    </span>
-                    <span style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--secondary)" }}>
-                      {usageData.usage.timeRemainingSeconds}s
-                    </span>
-                  </div>
-                </div>
-
-                {/* Per-model usage */}
-                {Object.keys(usageData.usage.modelsUsed).length > 0 && (
-                  <div style={{
-                    padding: "0.85rem",
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "12px",
-                  }}>
-                    <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "0.6rem" }}>
-                      Modelos utilizados en esta sesion
-                    </span>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      {Object.entries(usageData.usage.modelsUsed).map(([model, count]) => (
-                        <div key={model} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>{model}</span>
-                          <span style={{
-                            fontSize: "0.75rem",
-                            padding: "0.15rem 0.5rem",
-                            borderRadius: "12px",
-                            background: "rgba(251, 146, 60, 0.1)",
-                            color: "var(--primary)",
-                            fontWeight: "600",
-                          }}>
-                            {count} {count === 1 ? "uso" : "usos"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Available models table */}
-                <div style={{
-                  padding: "0.85rem",
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: "12px",
-                }}>
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "0.6rem" }}>
-                    Modelos disponibles y limites
-                  </span>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    {usageData.models.map((m) => (
-                      <div key={m.id} style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.15rem",
-                        padding: "0.6rem 0",
-                        borderBottom: "1px solid var(--border-subtle)",
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <Activity size={12} color="var(--primary)" style={{ flexShrink: 0 }} />
-                            <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-primary)" }}>{m.id}</span>
-                          </div>
-                          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{m.provider}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", paddingLeft: "1.25rem" }}>
-                          <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{m.role}</span>
-                          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{m.freeLimit}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontStyle: "italic" }}>
-                No se pudieron cargar los datos de uso.
-              </p>
-            )}
-          </section>
         </div>
 
         {/* Footer */}
