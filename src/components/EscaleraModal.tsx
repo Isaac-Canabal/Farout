@@ -236,8 +236,9 @@ export default function EscaleraModal({ onClose }: EscaleraModalProps) {
 
       // Añadir notas recientes del Diario
       const notesQuery = query(
-        collection(db, "notes"),
+        collection(db, "checkins"),
         where("userId", "==", user.uid),
+        where("type", "==", "mood_note"),
         orderBy("createdAt", "desc"),
         limit(10)
       );
@@ -245,7 +246,7 @@ export default function EscaleraModal({ onClose }: EscaleraModalProps) {
       notesSnap.forEach((n) => {
         const d = n.data();
         if (d.title || d.description) {
-          messageLines.push(`[Nota de Diario]: Título: "${d.title}" - Descripción: "${d.description}" (Estado de ánimo: ${d.mood}/4)`);
+          messageLines.push(`[Nota de Diario]: Título: "${d.title}" - Descripción: "${d.description}" (Estado de ánimo: ${d.score}/4)`);
         }
       });
 
