@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. Parsear el body
-  let body: { message: string; history: any[]; conversationId: string; imageData?: string };
+  let body: { message: string; history: any[]; conversationId: string; imageData?: string; userGeminiKey?: string; userClaudeKey?: string };
   try {
     body = await request.json();
   } catch {
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { message, history = [], conversationId, imageData } = body;
+  const { message, history = [], conversationId, imageData, userGeminiKey, userClaudeKey } = body;
 
   // Permitir mensajes vacíos si hay una imagen
   if ((!message || typeof message !== "string" || message.trim().length === 0) && !imageData) {
@@ -166,8 +166,8 @@ export async function POST(request: NextRequest) {
           if (!classifierUsingClaude) {
             // Intentar con Gemini
             const classifierModel = classifierModelIndex === 0 
-              ? getCrisisClassifierModel()
-              : getFallbackCrisisClassifierModel(classifierModelIndex - 1);
+              ? getCrisisClassifierModel(userGeminiKey)
+              : getFallbackCrisisClassifierModel(classifierModelIndex - 1, userGeminiKey);
             
             if (!classifierModel) {
               // Pasar a Claude si Gemini se agota
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
             classifierText = result.response.text();
           } else {
             // Intentar con Claude
-            const claudeModel = getClaudeCrisisClassifierModel(classifierModelIndex);
+            const claudeModel = getClaudeCrisisClassifierModel(classifierModelIndex, userClaudeKey);
             
             if (!claudeModel) break;
             
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
           if (classifierError?.status === 429 || classifierError?.message?.includes('quota') || classifierError?.error?.type === 'rate_limit_error') {
             classifierModelIndex++;
             // Si agotamos Gemini, pasar a Claude
-            if (!classifierUsingClaude && classifierModelIndex >= 3 && isClaudeAvailable()) {
+            if (!classifierUsingClaude && classifierModelIndex >= 3 && isClaudeAvailable(userClaudeKey)) {
               classifierUsingClaude = true;
               classifierModelIndex = 0;
               console.log("[Faro] Gemini agotado, cambiando a Claude para clasificación");
@@ -241,8 +241,8 @@ export async function POST(request: NextRequest) {
             if (!distressUsingClaude) {
               // Intentar con Gemini
               const distressModel = distressModelIndex === 0
-                ? getSustainedDistressModel()
-                : getFallbackSustainedDistressModel(distressModelIndex - 1);
+                ? getSustainedDistressModel(userGeminiKey)
+                : getFallbackSustainedDistressModel(distressModelIndex - 1, userGeminiKey);
               
               if (!distressModel) {
                 // Pasar a Claude si Gemini se agota
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
               distressText = distressResult.response.text();
             } else {
               // Intentar con Claude
-              const claudeModel = getClaudeSustainedDistressModel(distressModelIndex);
+              const claudeModel = getClaudeSustainedDistressModel(distressModelIndex, userClaudeKey);
               
               if (!claudeModel) break;
               
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
             if (distressError?.status === 429 || distressError?.message?.includes('quota') || distressError?.error?.type === 'rate_limit_error') {
               distressModelIndex++;
               // Si agotamos Gemini, pasar a Claude
-              if (!distressUsingClaude && distressModelIndex >= 3 && isClaudeAvailable()) {
+              if (!distressUsingClaude && distressModelIndex >= 3 && isClaudeAvailable(userClaudeKey)) {
                 distressUsingClaude = true;
                 distressModelIndex = 0;
                 console.log("[Faro] Gemini agotado, cambiando a Claude para detección de malestar");
@@ -326,8 +326,8 @@ export async function POST(request: NextRequest) {
         if (!usingClaude) {
           // Intentar con Gemini
           const chatModel = chatModelIndex === 0 
-            ? getChatModel()
-            : getFallbackChatModel(chatModelIndex - 1);
+            ? getChatModel(userGeminiKey)
+            : getFallbackChatModel(chatModelIndex - 1, userGeminiKey);
           
           if (!chatModel) {
             // Pasar a Claude si Gemini se agota
@@ -373,7 +373,7 @@ export async function POST(request: NextRequest) {
           chatSuccess = true;
         } else {
           // Intentar con Claude
-          const claudeModel = getClaudeChatModel(chatModelIndex);
+          const claudeModel = getClaudeChatModel(chatModelIndex, userClaudeKey);
           
           if (!claudeModel) break;
 
@@ -399,7 +399,7 @@ export async function POST(request: NextRequest) {
         if (chatError?.status === 429 || chatError?.message?.includes('quota') || chatError?.error?.type === 'rate_limit_error') {
           chatModelIndex++;
           // Si agotamos Gemini, pasar a Claude
-          if (!usingClaude && chatModelIndex >= 3 && isClaudeAvailable()) {
+          if (!usingClaude && chatModelIndex >= 3 && isClaudeAvailable(userClaudeKey)) {
             usingClaude = true;
             chatModelIndex = 0;
             console.log("[Faro] Gemini agotado, cambiando a Claude para chat");

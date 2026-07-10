@@ -155,11 +155,18 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [customMoods, setCustomMoods] = useState<Mood[]>([]);
   const [editingMood, setEditingMood] = useState<Mood | null>(null);
   const [showMoodEditor, setShowMoodEditor] = useState(false);
+  const [userGeminiKey, setUserGeminiKey] = useState("");
+  const [userClaudeKey, setUserClaudeKey] = useState("");
+  const [showApiKeyGuide, setShowApiKeyGuide] = useState(false);
+  const [validatingKey, setValidatingKey] = useState(false);
+  const [keyValidationStatus, setKeyValidationStatus] = useState<"idle" | "valid" | "invalid">("idle");
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("faro-theme") || "dark";
     const savedModel = localStorage.getItem("faro-model") || "gemini-flash";
     const savedMoods = localStorage.getItem("faro-moods");
+    const savedGeminiKey = localStorage.getItem("user-gemini-key");
+    const savedClaudeKey = localStorage.getItem("user-claude-key");
     setActiveTheme(savedTheme);
     setActiveModel(savedModel);
     if (savedMoods) {
@@ -173,6 +180,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         { value: 4, label: "Muy Bien", color: "#22c55e" },
       ]);
     }
+    if (savedGeminiKey) setUserGeminiKey(savedGeminiKey);
+    if (savedClaudeKey) setUserClaudeKey(savedClaudeKey);
     fetchUsage();
   }, []);
 
@@ -238,6 +247,20 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     localStorage.setItem("faro-moods", JSON.stringify(newMoods));
     setShowMoodEditor(false);
     setEditingMood(null);
+  };
+
+  const handleSaveApiKeys = () => {
+    if (userGeminiKey.trim()) {
+      localStorage.setItem("user-gemini-key", userGeminiKey.trim());
+    } else {
+      localStorage.removeItem("user-gemini-key");
+    }
+    if (userClaudeKey.trim()) {
+      localStorage.setItem("user-claude-key", userClaudeKey.trim());
+    } else {
+      localStorage.removeItem("user-claude-key");
+    }
+    alert("API keys guardadas correctamente.");
   };
 
   return (
@@ -599,6 +622,102 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
           </section>
 
+          {/* API Keys Section */}
+          <section>
+            <div style={{ marginBottom: "0.85rem" }}>
+              <h4
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: "700",
+                  color: "var(--text-primary)",
+                  marginBottom: "0.2rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                API Keys
+              </h4>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                Configura tus propias API keys para usar Faro sin límites.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                  Gemini API Key
+                </label>
+                <input
+                  type="password"
+                  value={userGeminiKey}
+                  onChange={(e) => setUserGeminiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-subtle)",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.9rem",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                  Claude API Key (opcional)
+                </label>
+                <input
+                  type="password"
+                  value={userClaudeKey}
+                  onChange={(e) => setUserClaudeKey(e.target.value)}
+                  placeholder="sk-ant-..."
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-subtle)",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.9rem",
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={() => setShowApiKeyGuide(true)}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  border: "1px dashed var(--border-subtle)",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+                className="glass-hover"
+              >
+                ¿Cómo obtener una API key?
+              </button>
+
+              <button
+                onClick={handleSaveApiKeys}
+                className="btn-primary"
+                style={{
+                  padding: "0.75rem",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Guardar API Keys
+              </button>
+            </div>
+          </section>
+
           {/* AI Usage / Consumption Section */}
           <section>
             <div style={{ marginBottom: "0.85rem" }}>
@@ -846,6 +965,88 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               >
                 Guardar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* API Key Guide Modal */}
+      {showApiKeyGuide && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowApiKeyGuide(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="glass"
+            style={{
+              padding: "1.5rem",
+              borderRadius: "16px",
+              maxWidth: "500px",
+              width: "90%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: "700" }}>Cómo obtener tu API Key</h3>
+              <button
+                onClick={() => setShowApiKeyGuide(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  padding: "0.4rem",
+                  borderRadius: "8px",
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ padding: "1rem", background: "rgba(251, 146, 60, 0.1)", borderRadius: "8px", border: "1px solid rgba(251, 146, 60, 0.2)" }}>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: "600", marginBottom: "0.5rem", color: "var(--primary)" }}>Gemini (Google)</h4>
+                <ol style={{ fontSize: "0.85rem", color: "var(--text-secondary)", paddingLeft: "1.2rem", lineHeight: "1.6" }}>
+                  <li>Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)" }}>Google AI Studio</a></li>
+                  <li>Inicia sesión con tu cuenta de Google</li>
+                  <li>Haz clic en "Create API Key" o "Crear API Key"</li>
+                  <li>Copia la key que empieza con "AIzaSy..."</li>
+                  <li>Pégala en el campo de Gemini API Key arriba</li>
+                </ol>
+              </div>
+
+              <div style={{ padding: "1rem", background: "rgba(244, 114, 182, 0.1)", borderRadius: "8px", border: "1px solid rgba(244, 114, 182, 0.2)" }}>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: "600", marginBottom: "0.5rem", color: "var(--secondary)" }}>Claude (Anthropic)</h4>
+                <ol style={{ fontSize: "0.85rem", color: "var(--text-secondary)", paddingLeft: "1.2rem", lineHeight: "1.6" }}>
+                  <li>Ve a <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" style={{ color: "var(--secondary)" }}>Anthropic Console</a></li>
+                  <li>Inicia sesión o crea una cuenta</li>
+                  <li>Ve a "API Keys" o "Billing"</li>
+                  <li>Haz clic en "Create Key" o "Crear Key"</li>
+                  <li>Copia la key que empieza con "sk-ant-..."</li>
+                  <li>Pégala en el campo de Claude API Key arriba</li>
+                </ol>
+              </div>
+
+              <div style={{ padding: "0.75rem", background: "rgba(148, 163, 184, 0.1)", borderRadius: "8px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                <strong>Nota:</strong> Solo necesitas Gemini para usar Faro. Claude es opcional pero proporciona respuestas más empáticas.
+              </div>
             </div>
           </div>
         </div>

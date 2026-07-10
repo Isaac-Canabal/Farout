@@ -152,6 +152,9 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
       }));
 
       // 4. Llamar a la API server-side
+      const userGeminiKey = localStorage.getItem("user-gemini-key");
+      const userClaudeKey = localStorage.getItem("user-claude-key");
+      
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -163,6 +166,8 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
           history: chatHistory,
           conversationId,
           imageData: imageData,
+          userGeminiKey: userGeminiKey || undefined,
+          userClaudeKey: userClaudeKey || undefined,
         }),
       });
 

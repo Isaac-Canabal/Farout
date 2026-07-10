@@ -14,16 +14,22 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
-const apiKey = process.env.ANTHROPIC_API_KEY;
+const defaultApiKey = process.env.ANTHROPIC_API_KEY;
 
-if (!apiKey) {
+if (!defaultApiKey) {
   console.warn(
     "[Faro] ANTHROPIC_API_KEY no está configurada en las variables de entorno. " +
     "Claude no estará disponible como fallback."
   );
 }
 
-const anthropic = apiKey ? new Anthropic({ apiKey }) : null;
+function getAnthropic(userApiKey?: string): Anthropic | null {
+  const apiKey = userApiKey || defaultApiKey;
+  if (!apiKey) {
+    return null;
+  }
+  return new Anthropic({ apiKey });
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // MODELOS DE CLAUDE - En orden de preferencia
@@ -50,7 +56,8 @@ const CLAUDE_DISTRESS_MODELS = [
 /**
  * Modelo para la generación de respuestas empáticas de Faro usando Claude.
  */
-export function getClaudeChatModel(modelIndex: number = 0) {
+export function getClaudeChatModel(modelIndex: number = 0, userApiKey?: string) {
+  const anthropic = getAnthropic(userApiKey);
   if (!anthropic) return null;
   
   const model = CLAUDE_CHAT_MODELS[modelIndex] || CLAUDE_CHAT_MODELS[0];
@@ -60,7 +67,8 @@ export function getClaudeChatModel(modelIndex: number = 0) {
 /**
  * Modelo para la clasificación de riesgo de crisis usando Claude.
  */
-export function getClaudeCrisisClassifierModel(modelIndex: number = 0) {
+export function getClaudeCrisisClassifierModel(modelIndex: number = 0, userApiKey?: string) {
+  const anthropic = getAnthropic(userApiKey);
   if (!anthropic) return null;
   
   const model = CLAUDE_CLASSIFIER_MODELS[modelIndex] || CLAUDE_CLASSIFIER_MODELS[0];
@@ -70,7 +78,8 @@ export function getClaudeCrisisClassifierModel(modelIndex: number = 0) {
 /**
  * Modelo para la detección de malestar sostenido usando Claude.
  */
-export function getClaudeSustainedDistressModel(modelIndex: number = 0) {
+export function getClaudeSustainedDistressModel(modelIndex: number = 0, userApiKey?: string) {
+  const anthropic = getAnthropic(userApiKey);
   if (!anthropic) return null;
   
   const model = CLAUDE_DISTRESS_MODELS[modelIndex] || CLAUDE_DISTRESS_MODELS[0];
@@ -80,6 +89,6 @@ export function getClaudeSustainedDistressModel(modelIndex: number = 0) {
 /**
  * Verifica si Claude está disponible
  */
-export function isClaudeAvailable(): boolean {
-  return anthropic !== null;
+export function isClaudeAvailable(userApiKey?: string): boolean {
+  return getAnthropic(userApiKey) !== null;
 }

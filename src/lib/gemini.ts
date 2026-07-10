@@ -14,18 +14,24 @@
 
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY;
+const defaultApiKey = process.env.GEMINI_API_KEY;
 
-if (!apiKey) {
+if (!defaultApiKey) {
   console.error(
     "[Faro] GEMINI_API_KEY no está configurada en las variables de entorno. " +
     "Las llamadas a la API de IA fallarán hasta que se configure."
   );
 } else {
-  console.log("[Faro] GEMINI_API_KEY está configurada. Longitud:", apiKey.length);
+  console.log("[Faro] GEMINI_API_KEY está configurada. Longitud:", defaultApiKey.length);
 }
 
-const genAI = new GoogleGenerativeAI(apiKey || "");
+function getGenAI(userApiKey?: string): GoogleGenerativeAI {
+  const apiKey = userApiKey || defaultApiKey;
+  if (!apiKey) {
+    throw new Error("No API key available (neither user key nor default key)");
+  }
+  return new GoogleGenerativeAI(apiKey);
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // MODELOS CON FALLBACK - En orden de preferencia
@@ -81,8 +87,9 @@ const SAFETY_SETTINGS = [
  * Modelo para la generación de respuestas empáticas de Faro.
  * Con sistema de fallback automático entre múltiples modelos.
  */
-export function getChatModel() {
-  return genAI.getGenerativeModel({
+export function getChatModel(userApiKey?: string) {
+  const genAIInstance = getGenAI(userApiKey);
+  return genAIInstance.getGenerativeModel({
     model: CHAT_MODELS[0],
     safetySettings: SAFETY_SETTINGS,
   });
@@ -91,11 +98,12 @@ export function getChatModel() {
 /**
  * Obtiene el siguiente modelo disponible si el actual falla
  */
-export function getFallbackChatModel(failedModelIndex: number) {
+export function getFallbackChatModel(failedModelIndex: number, userApiKey?: string) {
   const nextIndex = failedModelIndex + 1;
   if (nextIndex < CHAT_MODELS.length) {
     console.log(`[Faro] Fallback: Cambiando a modelo ${CHAT_MODELS[nextIndex]}`);
-    return genAI.getGenerativeModel({
+    const genAIInstance = getGenAI(userApiKey);
+    return genAIInstance.getGenerativeModel({
       model: CHAT_MODELS[nextIndex],
       safetySettings: SAFETY_SETTINGS,
     });
@@ -106,8 +114,9 @@ export function getFallbackChatModel(failedModelIndex: number) {
 /**
  * Modelo para la clasificación de riesgo de crisis.
  */
-export function getCrisisClassifierModel() {
-  return genAI.getGenerativeModel({
+export function getCrisisClassifierModel(userApiKey?: string) {
+  const genAIInstance = getGenAI(userApiKey);
+  return genAIInstance.getGenerativeModel({
     model: CLASSIFIER_MODELS[0],
     generationConfig: {
       temperature: 0.1,
@@ -117,11 +126,12 @@ export function getCrisisClassifierModel() {
   });
 }
 
-export function getFallbackCrisisClassifierModel(failedModelIndex: number) {
+export function getFallbackCrisisClassifierModel(failedModelIndex: number, userApiKey?: string) {
   const nextIndex = failedModelIndex + 1;
   if (nextIndex < CLASSIFIER_MODELS.length) {
     console.log(`[Faro] Fallback: Cambiando clasificador a ${CLASSIFIER_MODELS[nextIndex]}`);
-    return genAI.getGenerativeModel({
+    const genAIInstance = getGenAI(userApiKey);
+    return genAIInstance.getGenerativeModel({
       model: CLASSIFIER_MODELS[nextIndex],
       generationConfig: {
         temperature: 0.1,
@@ -136,8 +146,9 @@ export function getFallbackCrisisClassifierModel(failedModelIndex: number) {
 /**
  * Modelo para la detección de malestar sostenido en el historial.
  */
-export function getSustainedDistressModel() {
-  return genAI.getGenerativeModel({
+export function getSustainedDistressModel(userApiKey?: string) {
+  const genAIInstance = getGenAI(userApiKey);
+  return genAIInstance.getGenerativeModel({
     model: DISTRESS_MODELS[0],
     generationConfig: {
       temperature: 0.1,
@@ -147,11 +158,12 @@ export function getSustainedDistressModel() {
   });
 }
 
-export function getFallbackSustainedDistressModel(failedModelIndex: number) {
+export function getFallbackSustainedDistressModel(failedModelIndex: number, userApiKey?: string) {
   const nextIndex = failedModelIndex + 1;
   if (nextIndex < DISTRESS_MODELS.length) {
     console.log(`[Faro] Fallback: Cambiando detector de malestar a ${DISTRESS_MODELS[nextIndex]}`);
-    return genAI.getGenerativeModel({
+    const genAIInstance = getGenAI(userApiKey);
+    return genAIInstance.getGenerativeModel({
       model: DISTRESS_MODELS[nextIndex],
       generationConfig: {
         temperature: 0.1,

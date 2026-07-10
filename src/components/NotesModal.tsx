@@ -46,24 +46,16 @@ export default function NotesModal({ onClose }: NotesModalProps) {
     
     setIsSaving(true);
     try {
-      const noteData = {
-        userId: user.uid,
-        title: title.trim(),
-        description: description.trim(),
-        mood,
-        createdAt: serverTimestamp(),
-      };
-
-      // Guardar en colección "notes"
-      await addDoc(collection(db, "notes"), noteData);
-
-      // Guardar también como checkin para las tendencias
+      // Guardar como checkin para las tendencias
       await addDoc(collection(db, "checkins"), {
         userId: user.uid,
         type: "mood_note",
         score: mood,
+        title: title.trim(),
+        description: description.trim(),
         createdAt: serverTimestamp(),
       });
+      console.log("Checkin guardado en checkins");
 
       setSuccess(true);
       setTimeout(() => {
@@ -71,7 +63,8 @@ export default function NotesModal({ onClose }: NotesModalProps) {
       }, 2000);
     } catch (error) {
       console.error("Error guardando la nota:", error);
-      alert("Ocurrió un error guardando la nota.");
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      alert(`Ocurrió un error guardando la nota: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
