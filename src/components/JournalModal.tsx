@@ -13,6 +13,7 @@ interface JournalModalProps {
 interface JournalEntry {
   id: string;
   mood: number;
+  title: string;
   description: string;
   createdAt: any;
 }
@@ -61,7 +62,8 @@ export default function JournalModal({ onClose }: JournalModalProps) {
         const d = doc.data();
         list.push({
           id: doc.id,
-          mood: d.mood,
+          mood: d.score,
+          title: d.title,
           description: d.description,
           createdAt: d.createdAt,
         });
@@ -316,6 +318,20 @@ export default function JournalModal({ onClose }: JournalModalProps) {
                       <Trash2 size={14} />
                     </button>
                   </div>
+
+                  {/* Title */}
+                  {entry.title && (
+                    <h4
+                      style={{
+                        fontSize: "1rem",
+                        fontWeight: "700",
+                        color: "var(--text-primary)",
+                        margin: 0,
+                      }}
+                    >
+                      {entry.title}
+                    </h4>
+                  )}
 
                   {/* Description */}
                   <p
