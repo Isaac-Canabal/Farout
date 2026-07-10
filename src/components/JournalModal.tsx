@@ -60,6 +60,7 @@ export default function JournalModal({ onClose }: JournalModalProps) {
       const list: JournalEntry[] = [];
       snapshot.forEach((doc) => {
         const d = doc.data();
+        console.log("Entry data:", d);
         list.push({
           id: doc.id,
           mood: d.score,
@@ -68,6 +69,7 @@ export default function JournalModal({ onClose }: JournalModalProps) {
           createdAt: d.createdAt,
         });
       });
+      console.log("Loaded entries:", list);
       setEntries(list);
       setLoading(false);
     }, (error) => {
